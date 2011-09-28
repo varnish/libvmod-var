@@ -1,0 +1,18 @@
+Module var
+Init init_function
+# Shortcut for strings
+Function VOID set(STRING, STRING)
+Function STRING get(STRING)
+
+Function VOID global_set(STRING, STRING)
+Function STRING global_get(STRING)
+
+Function VOID set_int(STRING, INT)
+Function INT get_int(STRING)
+Function VOID set_string(STRING, STRING)
+Function STRING get_string(STRING)
+Function VOID set_real(STRING, REAL)
+Function REAL get_real(STRING)
+Function VOID set_duration(STRING, DURATION)
+Function DURATION get_duration(STRING)
+Function VOID clear()
