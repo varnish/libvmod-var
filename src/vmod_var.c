@@ -263,6 +263,7 @@ vmod_global_get(struct sess *sp, const char *name)
 		if (v->name && strcmp(v->name, name) == 0)
 			break;
 	}
+	AZ(pthread_mutex_unlock(&var_list_mtx));
 	if (!v)
 		return NULL;
 	return(v->value.STRING);
