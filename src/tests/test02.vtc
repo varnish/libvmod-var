@@ -1,0 +1,27 @@
+varnishtest "Test global variables"
+
+server s1 {
+       rxreq
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import var from "${vmod_topbuild}/src/.libs/libvmod_var.so";
+
+	sub vcl_init {
+		var.global_set("foo", "bar");
+		var.global_set("bar", "baz");
+	}
+
+	sub vcl_deliver {
+		set resp.http.x-foo = var.global_get("foo");
+		set resp.http.x-bar = var.global_get("bar");
+	}
+} -start
+
+client c1 {
+	txreq
+	rxresp
+	expect resp.http.x-foo == "bar"
+	expect resp.http.x-bar == "baz"
+} -run
