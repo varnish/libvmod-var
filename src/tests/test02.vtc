@@ -11,7 +11,7 @@ varnish v1 -vcl+backend {
 	sub vcl_init {
 		var.global_set("foo", "fooval");
 		var.global_set("bar", "barval");
-		var.global_set("foo", "altered_fooval");
+		var.global_set("bar", "altered_barval");
 	}
 
 	sub vcl_deliver {
@@ -23,6 +23,6 @@ varnish v1 -vcl+backend {
 client c1 {
 	txreq
 	rxresp
-	expect resp.http.x-foo == "altered_fooval"
-	expect resp.http.x-bar == "barval"
+	expect resp.http.x-foo == "fooval"
+	expect resp.http.x-bar == "altered_barval"
 } -run
