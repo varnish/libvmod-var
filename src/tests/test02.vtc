@@ -9,8 +9,9 @@ varnish v1 -vcl+backend {
 	import var from "${vmod_topbuild}/src/.libs/libvmod_var.so";
 
 	sub vcl_init {
-		var.global_set("foo", "bar");
-		var.global_set("bar", "baz");
+		var.global_set("foo", "fooval");
+		var.global_set("bar", "barval");
+		var.global_set("foo", "altered_fooval");
 	}
 
 	sub vcl_deliver {
@@ -22,6 +23,6 @@ varnish v1 -vcl+backend {
 client c1 {
 	txreq
 	rxresp
-	expect resp.http.x-foo == "bar"
-	expect resp.http.x-bar == "baz"
+	expect resp.http.x-foo == "altered_fooval"
+	expect resp.http.x-bar == "barval"
 } -run

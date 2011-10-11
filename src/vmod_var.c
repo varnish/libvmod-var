@@ -34,7 +34,7 @@ struct var_head {
 
 static struct var_head *var_list;
 int var_list_sz;
-VTAILQ_HEAD(, var) global_vars;
+VTAILQ_HEAD(, var) global_vars = VTAILQ_HEAD_INITIALIZER(global_vars);
 static pthread_mutex_t var_list_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 
@@ -238,7 +238,9 @@ vmod_global_set(struct sess *sp, const char *name, const char *value)
 		if (v->name && strcmp(v->name, name) == 0)
 			break;
 	}
-	if (!v)
+	if (v)
+		VTAILQ_REMOVE(&global_vars, v, list);
+	else
 		v = (struct var*)calloc(1, sizeof(struct var));
 	AN(v);
 	free(v->name);
