@@ -66,6 +66,8 @@ static void vh_clear(struct var_head *vh) {
 static struct var * vh_get_var(struct var_head *vh, const char *name) {
 	struct var *v;
 
+	if (!name)
+		return NULL;
 	VTAILQ_FOREACH(v, &vh->vars, list) {
 		if (v->name && strcmp(v->name, name) == 0)
 			return v;

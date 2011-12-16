@@ -1,0 +1,41 @@
+varnishtest "Test example vmod"
+
+server s1 {
+       rxreq
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import var from "${vmod_topbuild}/src/.libs/libvmod_var.so";
+
+	sub vcl_deliver {
+		var.set("foo", "bar");
+		set resp.http.x-foo = var.get("foo");
+		var.set("foo2", "bar2");
+		set resp.http.x-foo = var.get("foo");
+		var.clear();
+		set resp.http.x-foo2 = "" + var.get("foo2");
+		var.set_int("i1", 123);
+		set resp.http.i1 = var.get_int("i1") + 1;
+		var.set_real("r1", 2);
+		var.set_real("r1", var.get_real("r1"));
+		set resp.http.r1 = var.get_real("r1");
+
+		var.set_duration("d1", 1m);
+		set resp.http.d1 = var.get_duration("d1");
+		set resp.http.x-null = var.get("nosuchvar");
+		set resp.http.x-null2 = var.get(req.http.no-such-var);
+	}
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+	expect resp.http.x-foo == "bar"
+	expect resp.http.x-foo2 == ""
+	expect resp.http.i1 == "124"
+	expect resp.http.r1 == "2.000"
+	expect resp.http.d1 == "60.000"
+}
+
+client c1 -run
