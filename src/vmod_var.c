@@ -32,7 +32,7 @@ struct var_head {
 	VTAILQ_HEAD(, var) vars;
 };
 
-static struct var_head *var_list;
+static struct var_head **var_list;
 int var_list_sz;
 VTAILQ_HEAD(, var) global_vars = VTAILQ_HEAD_INITIALIZER(global_vars);
 static pthread_mutex_t var_list_mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -46,18 +46,9 @@ static void vh_init(struct var_head *vh) {
 static void vh_clear(struct var_head *vh) {
 	struct var *v, *v2;
 
+	VTAILQ_INIT(&vh->vars);
 	VTAILQ_FOREACH_SAFE(v, &vh->vars, list, v2) {
 		VTAILQ_REMOVE(&vh->vars, v, list);
-/*		free(v->name);
-		switch (v->type) {
-		case STRING:
-			free(v->value.STRING);
-			break;
-		default:
-			break;
-		}
-		free(v);
-*/
 	}
 	vh->xid = 0;
 	vh->magic = 0;
@@ -95,10 +86,11 @@ int
 init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 {
 	var_list_sz = 256;
-	var_list = malloc(sizeof(struct var) * 256);
+	var_list = malloc(sizeof(struct var_head *) * 256);
 	AN(var_list);
 	for (int i = 0 ; i < var_list_sz; i++) {
-		vh_init(&var_list[i]);
+		var_list[i] = malloc(sizeof(struct var_head));
+		vh_init(var_list[i]);
 	}
 	return 0;
 }
@@ -109,14 +101,15 @@ static struct var_head * get_vh(struct sess *sp) {
 	while (var_list_sz <= sp->id) {
 		int ns = var_list_sz*2;
 		/* resize array */
-		var_list = realloc(var_list, ns * sizeof(struct var_head));
+		var_list = realloc(var_list, ns * sizeof(struct var_head *));
 		for (; var_list_sz < ns; var_list_sz++) {
-			vh_init(&var_list[var_list_sz]);
+			var_list[var_list_sz] = malloc(sizeof(struct var_head));
+			vh_init(var_list[var_list_sz]);
 		}
 		assert(var_list_sz == ns);
 		AN(var_list);
 	}
-	vh = &var_list[sp->id];
+	vh = var_list[sp->id];
 
 	if (vh->xid != sp->xid) {
 		vh_clear(vh);
