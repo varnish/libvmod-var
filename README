@@ -1,33 +1,31 @@
-This is an example skeleton for developing out-of-tree Varnish
-vmods. It implements the "Hello, World!" as a vmod callback. Not
-particularly useful in good hello world tradition, but demonstrates how
-to get the glue around a vmod working.
+This VMOD implements basic variable in VCL. Well. It's more of an
+association list with support for strings, ints and reals.
 
-The source tree is based on autotools to configure the building, and
-does also have the necessary bits in place to do functional unit tests
-using the varnishtest tool.
+import var;
 
-Usage:
-./configure VARNISHSRC=DIR [VMODDIR=DIR]
+sub vcl_recv {
 
-VARNISHSRC is the directory of the Varnish source tree for which to
-compile your vmod. Both the VARNISHSRC and VARNISHSRC/include
-will be added to the include search paths for your module.
+    # count the number of iDevices:
+    if (req.http.user-agent ~ iP(od|ad|hone) ) {
+       	set var.set_int("idevs", var.get_int("i1") + 1 );
+    }
 
-Optionally you can also set the vmod install directory by adding
-VMODDIR=DIR (defaults to the pkg-config discovered directory from your
-Varnish installation).
+There are methods to get and set each type.
 
-Make targets:
-make - builds the vmod
-make install - installs your vmod in VMODDIR
-make check - runs the unit tests in src/tests/*.vtc
+Prototype, most should be self-explaining:
 
-In your VCL you could then use this vmod along the following lines:
+Function VOID set_int(STRING, INT)
+Function INT get_int(STRING)
 
-import example;
+Function VOID set_string(STRING, STRING)
+Function STRING get_string(STRING)
 
-sub vcl_deliver {
-	# This sets resp.http.hello to "Hello, World"
-	set resp.http.hello = example.hello("World");
-}
+Function VOID set_real(STRING, REAL)
+Function REAL get_real(STRING)
+
+Function VOID set_duration(STRING, DURATION)
+Function DURATION get_duration(STRING)
+
+Function VOID clear()
+
+clear() clears the whole variable space.
