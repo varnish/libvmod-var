@@ -254,15 +254,17 @@ const char *
 vmod_global_get(struct sess *sp, const char *name)
 {
 	struct var *v;
-
+	const char *r = NULL;
 	AZ(pthread_mutex_lock(&var_list_mtx));
 	VTAILQ_FOREACH(v, &global_vars, list) {
 		if (v->name && strcmp(v->name, name) == 0)
 			break;
 	}
+	if (v) {
+	  r = WS_Dup(sp->ws, v->value.STRING);
+	  AN(r);
+	}
 	AZ(pthread_mutex_unlock(&var_list_mtx));
-	if (!v)
-		return NULL;
-	return(v->value.STRING);
+	return(r);
 }
 
