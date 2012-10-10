@@ -7,7 +7,7 @@ sub vcl_recv {
 
     # count the number of iDevices:
     if (req.http.user-agent ~ iP(od|ad|hone) ) {
-       	set var.set_int("idevs", var.get_int("i1") + 1 );
+       	var.set_int("idevs", var.get_int("i1") + 1 );
     }
 
 There are methods to get and set each type.
