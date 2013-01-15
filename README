@@ -14,6 +14,12 @@ There are methods to get and set each type.
 
 Prototype, most should be self-explaining:
 
+Function VOID set(STRING, STRING)
+Function STRING get(STRING)
+
+Function VOID global_set(STRING, STRING)
+Function STRING global_get(STRING)
+
 Function VOID set_int(STRING, INT)
 Function INT get_int(STRING)
 
