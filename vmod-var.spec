@@ -4,16 +4,16 @@ Version: 0.1
 Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
-Source0: libvmod-var-%{version}.tar.gz
+Source0: libvmod-var.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires: varnish > 3.0
 BuildRequires: make, python-docutils
 
 %description
-2ndary hashes VMOD
+Variables for Varnish
 
 %prep
-%setup -n libvmod-var-%{version}
+%setup -n libvmod-var
 
 %build
 # this assumes that VARNISHSRC is defined on the rpmbuild command line, like this:
