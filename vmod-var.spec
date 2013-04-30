@@ -38,5 +38,5 @@ rm -rf %{buildroot}
 %{_mandir}/man?/*
 
 %changelog
-* 2013-04-30 Tollef Fog Heen <tfheen@varnish-software.com> - 0.1-1
+* Tue Apr 30 2013 Tollef Fog Heen <tfheen@varnish-software.com> - 0.1-1
 - Initial version.
