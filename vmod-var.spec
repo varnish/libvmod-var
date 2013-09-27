@@ -1,5 +1,5 @@
 Summary: Variable VMOD for Varnish
-Name: vmod-varnish-%{VARNISHVER}-var
+Name: vmod-var
 Version: 0.1
 Release: 1%{?dist}
 License: BSD
@@ -16,6 +16,10 @@ Variables for Varnish
 %setup -n libvmod-var
 
 %build
+# XXX: hack for 3.x and mock
+if [ -n "%{VARNISH_CP_SRC}" ]; then
+    cp -va "%{VARNISH_CP_SRC}" "%{VARNISHSRC}"
+fi
 # this assumes that VARNISHSRC is defined on the rpmbuild command line, like this:
 # rpmbuild -bb --define 'VARNISHSRC /home/user/rpmbuild/BUILD/varnish-3.0.3' redhat/*spec
 ./configure VARNISHSRC=%{VARNISHSRC} VMODDIR="$(PKG_CONFIG_PATH=%{VARNISHSRC} pkg-config --variable=vmoddir varnishapi)" --prefix=/usr/
