@@ -147,7 +147,7 @@ vmod_get_string(struct sess *sp, const char *name)
 	struct var *v;
 	v = vh_get_var(get_vh(sp), name);
 
-	if (!v)
+	if (!v || v->type != STRING)
 		return NULL;
 	return (v->value.STRING);
 }
@@ -168,7 +168,7 @@ vmod_get_int(struct sess *sp, const char *name)
 
 	v = vh_get_var(get_vh(sp), name);
 
-	if (!v)
+	if (!v || v->type != INT)
 		return 0;
 	return (v->value.INT);
 }
@@ -189,7 +189,7 @@ vmod_get_real(struct sess *sp, const char *name)
 
 	v = vh_get_var(get_vh(sp), name);
 
-	if (!v)
+	if (!v || v->type != REAL)
 		return 0.;
 	return (v->value.REAL);
 }
@@ -210,7 +210,7 @@ vmod_get_duration(struct sess *sp, const char *name)
 
 	v = vh_get_var(get_vh(sp), name);
 
-	if (!v)
+	if (!v || v->type != DURATION)
 		return 0;
 	return (v->value.DURATION);
 }
