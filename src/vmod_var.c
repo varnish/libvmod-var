@@ -138,6 +138,8 @@ vmod_set_string(struct sess *sp, const char *name, const char *value)
 	struct var *v;
 	v = vh_get_var_alloc(get_vh(sp), name, sp);
 	v->type = STRING;
+	if (value == NULL)
+		value = "";
 	v->value.STRING = WS_Dup(sp->ws, value);
 }
 
