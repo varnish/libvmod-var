@@ -38,20 +38,12 @@ VTAILQ_HEAD(, var) global_vars = VTAILQ_HEAD_INITIALIZER(global_vars);
 static pthread_mutex_t var_list_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 
-static void vh_init(struct var_head *vh) {
+static void vh_init(struct var_head *vh)
+{
+
+	memset(vh, 0, sizeof *vh);
 	vh->magic = VMOD_VAR_MAGIC;
 	VTAILQ_INIT(&vh->vars);
-}
-
-static void vh_clear(struct var_head *vh) {
-	struct var *v, *v2;
-
-	VTAILQ_INIT(&vh->vars);
-	VTAILQ_FOREACH_SAFE(v, &vh->vars, list, v2) {
-		VTAILQ_REMOVE(&vh->vars, v, list);
-	}
-	vh->xid = 0;
-	vh->magic = 0;
 }
 
 static struct var * vh_get_var(struct var_head *vh, const char *name) {
@@ -112,7 +104,6 @@ static struct var_head * get_vh(struct sess *sp) {
 	vh = var_list[sp->id];
 
 	if (vh->xid != sp->xid) {
-		vh_clear(vh);
 		vh_init(vh);
 		vh->xid = sp->xid;
 	}
@@ -221,7 +212,6 @@ void vmod_clear(struct sess *sp)
 {
 	struct var_head *vh;
 	vh = get_vh(sp);
-	vh_clear(vh);
 	vh_init(vh);
 }
 
