@@ -34,8 +34,8 @@ struct var_head {
 	VTAILQ_HEAD(, var) vars;
 };
 
-static struct var_head **var_list;
-static int var_list_sz;
+static struct var_head **var_list = NULL;
+static int var_list_sz = 0;
 static VTAILQ_HEAD(, var) global_vars = VTAILQ_HEAD_INITIALIZER(global_vars);
 static pthread_mutex_t var_list_mtx = PTHREAD_MUTEX_INITIALIZER;
 
@@ -85,13 +85,19 @@ static struct var * vh_get_var_alloc(struct var_head *vh, const char *name,
 int
 init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 {
-	var_list_sz = 256;
-	var_list = malloc(sizeof(struct var_head *) * 256);
-	AN(var_list);
-	for (int i = 0 ; i < var_list_sz; i++) {
-		var_list[i] = malloc(sizeof(struct var_head));
-		vh_init(var_list[i]);
+
+	AZ(pthread_mutex_lock(&var_list_mtx));
+	if (var_list == NULL) {
+		AZ(var_list_sz);
+		var_list_sz = 256;
+		var_list = malloc(sizeof(struct var_head *) * 256);
+		AN(var_list);
+		for (int i = 0 ; i < var_list_sz; i++) {
+			var_list[i] = malloc(sizeof(struct var_head));
+			vh_init(var_list[i]);
+		}
 	}
+	AZ(pthread_mutex_unlock(&var_list_mtx));
 	return 0;
 }
 

@@ -1,0 +1,41 @@
+varnishtest "Test vcl reload"
+
+server s1 {
+       rxreq
+       sema r1 sync 2
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import var from "${vmod_topbuild}/src/.libs/libvmod_var.so";
+
+	sub vcl_recv {
+		var.set("foo", "bar");
+	}
+
+	sub vcl_deliver {
+		set resp.http.x-foo = var.get("foo");
+	}
+} -start
+
+client c1 {
+	txreq -url "/"
+	rxresp
+	expect resp.http.x-foo == "bar"
+} -start
+
+varnish v1 -vcl+backend {
+	import var from "${vmod_topbuild}/src/.libs/libvmod_var.so";
+
+	sub vcl_recv {
+		var.set("foo", "bar");
+	}
+
+	sub vcl_deliver {
+		set resp.http.x-foo = var.get("foo");
+	}
+}
+
+sema r1 sync 2
+
+client c1 -wait
