@@ -33,8 +33,8 @@ struct var_head {
 };
 
 static struct var_head **var_list;
-int var_list_sz;
-VTAILQ_HEAD(, var) global_vars = VTAILQ_HEAD_INITIALIZER(global_vars);
+static int var_list_sz;
+static VTAILQ_HEAD(, var) global_vars = VTAILQ_HEAD_INITIALIZER(global_vars);
 static pthread_mutex_t var_list_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 
@@ -58,7 +58,8 @@ static struct var * vh_get_var(struct var_head *vh, const char *name) {
 	return NULL;
 }
 
-static struct var * vh_get_var_alloc(struct var_head *vh, const char *name, struct sess *sp)
+static struct var * vh_get_var_alloc(struct var_head *vh, const char *name,
+    struct sess *sp)
 {
 	struct var *v;
 	v = vh_get_var(vh, name);
@@ -259,4 +260,3 @@ vmod_global_get(struct sess *sp, const char *name)
 	AZ(pthread_mutex_unlock(&var_list_mtx));
 	return(r);
 }
-
