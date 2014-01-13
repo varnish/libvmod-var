@@ -166,83 +166,42 @@ vmod_get_string(struct sess *sp, const char *name)
 	return (v->value.STRING);
 }
 
-void
-vmod_set_int(struct sess *sp, const char *name, int value)
-{
-	struct var *v;
-	if (name == NULL)
-		return;
-	v = vh_get_var_alloc(get_vh(sp), name, sp);
-	AN(v);
-	v->type = INT;
-	v->value.INT = value;
+
+#define VMOD_SET_X(vcl_type_u, vcl_type_l, ctype) \
+void \
+vmod_set_##vcl_type_l(struct sess *sp, const char *name, ctype value) \
+{ \
+	struct var *v; \
+	if (name == NULL) \
+		return; \
+	v = vh_get_var_alloc(get_vh(sp), name, sp); \
+	AN(v); \
+	v->type = vcl_type_u; \
+	v->value.vcl_type_u = value; \
 }
 
-int
-vmod_get_int(struct sess *sp, const char *name)
-{
-	struct var *v;
+VMOD_SET_X(INT, int, int)
+VMOD_SET_X(REAL, real, double)
+VMOD_SET_X(DURATION, duration, double)
 
-	if (name == NULL)
-		return 0;
-	v = vh_get_var(get_vh(sp), name);
-
-	if (!v || v->type != INT)
-		return 0;
-	return (v->value.INT);
+#define VMOD_GET_X(vcl_type_u, vcl_type_l, ctype) \
+ctype \
+vmod_get_##vcl_type_l(struct sess *sp, const char *name) \
+{ \
+	struct var *v; \
+\
+	if (name == NULL) \
+		return 0; \
+	v = vh_get_var(get_vh(sp), name); \
+\
+	if (!v || v->type != vcl_type_u) \
+		return 0; \
+	return (v->value.vcl_type_u); \
 }
 
-void
-vmod_set_real(struct sess *sp, const char *name, double value)
-{
-	struct var *v;
-	if (name == NULL)
-		return;
-	v = vh_get_var_alloc(get_vh(sp), name, sp);
-	AN(v);
-	v->type = REAL;
-	v->value.REAL = value;
-}
-
-double
-vmod_get_real(struct sess *sp, const char *name)
-{
-	struct var *v;
-
-	if (name == NULL)
-		return (0.);
-	v = vh_get_var(get_vh(sp), name);
-
-	if (!v || v->type != REAL)
-		return 0.;
-	return (v->value.REAL);
-}
-
-void
-vmod_set_duration(struct sess *sp, const char *name, double value)
-{
-	struct var *v;
-	if (name == NULL)
-		return;
-	v = vh_get_var_alloc(get_vh(sp), name, sp);
-	AN(v);
-	v->type = DURATION;
-	v->value.DURATION = value;
-}
-
-double
-vmod_get_duration(struct sess *sp, const char *name)
-{
-	struct var *v;
-
-	if (name == NULL)
-		return (0.);
-	v = vh_get_var(get_vh(sp), name);
-
-	if (!v || v->type != DURATION)
-		return 0;
-	return (v->value.DURATION);
-}
+VMOD_GET_X(INT, int, int)
+VMOD_GET_X(REAL, real, double)
+VMOD_GET_X(DURATION, duration, double)
 
 void vmod_clear(struct sess *sp)
 {
