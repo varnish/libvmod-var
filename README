@@ -1,16 +1,11 @@
 This VMOD implements basic variable in VCL. Well. It's more of an
 association list with support for strings, ints and reals.
 
-import var;
-
-sub vcl_recv {
-
-    # count the number of iDevices:
-    if (req.http.user-agent ~ iP(od|ad|hone) ) {
-       	var.set_int("idevs", var.get_int("i1") + 1 );
-    }
-
 There are methods to get and set each type.
+
+Global variables have a lifespan that extends across requests and
+VCLs, for as long as the vmod is loaded. Non-globals are local to a
+single request.
 
 Prototype, most should be self-explaining:
 
@@ -34,4 +29,4 @@ Function DURATION get_duration(STRING)
 
 Function VOID clear()
 
-clear() clears the whole variable space.
+clear() clears the whole non-global variable space.
