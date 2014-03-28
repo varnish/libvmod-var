@@ -1,4 +1,4 @@
-$Module var
+$Module var 3 Variable VMOD for Varnish
 $Init init_function
 # Shortcut for strings
 $Function VOID set(STRING, STRING)
