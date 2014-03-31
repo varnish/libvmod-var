@@ -39,23 +39,6 @@ static int var_list_sz = 0;
 static VTAILQ_HEAD(, var) global_vars = VTAILQ_HEAD_INITIALIZER(global_vars);
 static pthread_mutex_t var_list_mtx = PTHREAD_MUTEX_INITIALIZER;
 
-/* Stolen from 3.0's cache_ws.c  */
-static char *
-WS_Dup(struct ws *ws, const char *s)
-{
-	unsigned l;
-	char *p;
-
-	WS_Assert(ws);
-	l = strlen(s) + 1;
-	p = WS_Alloc(ws, l);
-	if (p != NULL)
-		memcpy(p, s, l);
-	DSL(0x02, SLT_Debug, 0, "WS_Dup(%p, \"%s\") = %p", ws, s, p);
-	WS_Assert(ws);
-	return (p);
-}
-
 static void
 vh_init(struct var_head *vh)
 {
@@ -94,7 +77,7 @@ vh_get_var_alloc(struct var_head *vh, const char *name, const struct vrt_ctx *ct
 		v = (struct var*)WS_Alloc(ctx->ws, sizeof(struct var));
 		AN(v);
 		v->magic = VAR_MAGIC;
-		v->name = WS_Dup(ctx->ws, name);
+		v->name = WS_Copy(ctx->ws, name, -1);
 		AN(v->name);
 		VTAILQ_INSERT_HEAD(&vh->vars, v, list);
 	}
@@ -171,7 +154,7 @@ vmod_set_string(const struct vrt_ctx *ctx, VCL_STRING name, VCL_STRING value)
 	v->type = STRING;
 	if (value == NULL)
 		value = "";
-	v->value.STRING = WS_Dup(ctx->ws, value);
+	v->value.STRING = WS_Copy(ctx->ws, value, -1);
 }
 
 VCL_STRING
@@ -280,7 +263,7 @@ vmod_global_get(const struct vrt_ctx *ctx, VCL_STRING name)
 			break;
 	}
 	if (v && v->value.STRING != NULL) {
-		r = WS_Dup(ctx->ws, v->value.STRING);
+		r = WS_Copy(ctx->ws, v->value.STRING, -1);
 		AN(r);
 	}
 	AZ(pthread_mutex_unlock(&var_list_mtx));
