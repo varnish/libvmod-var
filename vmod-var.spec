@@ -1,7 +1,7 @@
-Summary: Variable VMOD for Varnish
+Summary: Variable VMOD for Varnish %{VARNISHVER}
 Name: vmod-var
 Version: 0.1
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: BSD
 Group: System Environment/Daemons
 Source0: libvmod-var.tar.gz
@@ -10,7 +10,7 @@ Requires: varnish > 3.0
 BuildRequires: make, python-docutils
 
 %description
-Variables for Varnish
+VCL variables for Varnish %{VARNISHVER}.
 
 %prep
 %setup -n libvmod-var
