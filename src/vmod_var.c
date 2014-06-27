@@ -66,6 +66,8 @@ vh_reset(struct var_head *vh)
 		v = VTAILQ_FIRST(&vh->vars);
 		VTAILQ_REMOVE(&vh->vars, v, list);
 		var_clean(v);
+		AN(v->name);
+		free(v->name);
 		FREE_OBJ(v);
 	}
 }
