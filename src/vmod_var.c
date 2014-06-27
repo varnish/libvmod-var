@@ -7,6 +7,7 @@
 #include "vcc_if.h"
 
 enum VAR_TYPE {
+	UNSET,
 	STRING,
 	INT,
 	REAL,
@@ -39,17 +40,39 @@ static int var_list_sz = 0;
 static VTAILQ_HEAD(, var) global_vars = VTAILQ_HEAD_INITIALIZER(global_vars);
 static pthread_mutex_t var_list_mtx = PTHREAD_MUTEX_INITIALIZER;
 
-
-static void vh_init(struct var_head *vh)
+static void
+var_clean(struct var *v)
 {
 
-	AN(vh);
-	memset(vh, 0, sizeof *vh);
-	vh->magic = VAR_HEAD_MAGIC;
-	VTAILQ_INIT(&vh->vars);
+	CHECK_OBJ_NOTNULL(v, VAR_MAGIC);
+	switch (v->type) {
+	case STRING:
+		AN(v->value.STRING);
+		free(v->value.STRING);
+		break;
+	default:
+		break;
+	}
+	v->type = UNSET;
 }
 
-static struct var * vh_get_var(struct var_head *vh, const char *name) {
+static void
+vh_reset(struct var_head *vh)
+{
+	struct var *v;
+
+	CHECK_OBJ_NOTNULL(vh, VAR_HEAD_MAGIC);
+	while (!VTAILQ_EMPTY(&vh->vars)) {
+		v = VTAILQ_FIRST(&vh->vars);
+		VTAILQ_REMOVE(&vh->vars, v, list);
+		var_clean(v);
+		FREE_OBJ(v);
+	}
+}
+
+static struct var *
+vh_get_var(struct var_head *vh, const char *name)
+{
 	struct var *v;
 
 	AN(vh);
@@ -58,13 +81,13 @@ static struct var * vh_get_var(struct var_head *vh, const char *name) {
 		CHECK_OBJ_NOTNULL(v, VAR_MAGIC);
 		AN(v->name);
 		if (strcmp(v->name, name) == 0)
-			return v;
+			return (v);
 	}
-	return NULL;
+	return (NULL);
 }
 
-static struct var * vh_get_var_alloc(struct var_head *vh, const char *name,
-    struct sess *sp)
+static struct var *
+vh_get_var_alloc(struct var_head *vh, const char *name, struct sess *sp)
 {
 	struct var *v;
 
@@ -72,14 +95,13 @@ static struct var * vh_get_var_alloc(struct var_head *vh, const char *name,
 
 	if (!v) {
 		/* Allocate and add */
-		v = (struct var*)WS_Alloc(sp->ws, sizeof(struct var));
-		AN(v);
-		v->magic = VAR_MAGIC;
-		v->name = WS_Dup(sp->ws, name);
+		ALLOC_OBJ(v, VAR_MAGIC);
+		v->type = UNSET;
+		v->name = strdup(name);
 		AN(v->name);
 		VTAILQ_INSERT_HEAD(&vh->vars, v, list);
 	}
-	return v;
+	return (v);
 }
 
 int
@@ -93,15 +115,16 @@ init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
 		var_list = malloc(sizeof(struct var_head *) * 256);
 		AN(var_list);
 		for (int i = 0 ; i < var_list_sz; i++) {
-			var_list[i] = malloc(sizeof(struct var_head));
-			vh_init(var_list[i]);
+			ALLOC_OBJ(var_list[i], VAR_HEAD_MAGIC);
+			VTAILQ_INIT(&var_list[i]->vars);
 		}
 	}
 	AZ(pthread_mutex_unlock(&var_list_mtx));
 	return 0;
 }
 
-static struct var_head * get_vh(struct sess *sp)
+static struct var_head *
+get_vh(struct sess *sp)
 {
 	struct var_head *vh;
 
@@ -111,8 +134,8 @@ static struct var_head * get_vh(struct sess *sp)
 		/* resize array */
 		var_list = realloc(var_list, ns * sizeof(struct var_head *));
 		for (; var_list_sz < ns; var_list_sz++) {
-			var_list[var_list_sz] = malloc(sizeof(struct var_head));
-			vh_init(var_list[var_list_sz]);
+			ALLOC_OBJ(var_list[var_list_sz], VAR_HEAD_MAGIC);
+			VTAILQ_INIT(&var_list[var_list_sz]->vars);
 		}
 		assert(var_list_sz == ns);
 		AN(var_list);
@@ -120,7 +143,7 @@ static struct var_head * get_vh(struct sess *sp)
 	vh = var_list[sp->id];
 
 	if (vh->xid != sp->xid) {
-		vh_init(vh);
+		vh_reset(vh);
 		vh->xid = sp->xid;
 	}
 	AZ(pthread_mutex_unlock(&var_list_mtx));
@@ -148,10 +171,11 @@ vmod_set_string(struct sess *sp, const char *name, const char *value)
 		return;
 	v = vh_get_var_alloc(get_vh(sp), name, sp);
 	AN(v);
+	var_clean(v);
 	v->type = STRING;
 	if (value == NULL)
 		value = "";
-	v->value.STRING = WS_Dup(sp->ws, value);
+	v->value.STRING = strdup(value);
 }
 
 const char *
@@ -162,41 +186,42 @@ vmod_get_string(struct sess *sp, const char *name)
 		return (NULL);
 	v = vh_get_var(get_vh(sp), name);
 	if (!v || v->type != STRING)
-		return NULL;
+		return (NULL);
 	return (v->value.STRING);
 }
 
 
-#define VMOD_SET_X(vcl_type_u, vcl_type_l, ctype) \
-void \
-vmod_set_##vcl_type_l(struct sess *sp, const char *name, ctype value) \
-{ \
-	struct var *v; \
-	if (name == NULL) \
-		return; \
-	v = vh_get_var_alloc(get_vh(sp), name, sp); \
-	AN(v); \
-	v->type = vcl_type_u; \
-	v->value.vcl_type_u = value; \
+#define VMOD_SET_X(vcl_type_u, vcl_type_l, ctype)			\
+void									\
+vmod_set_##vcl_type_l(struct sess *sp, const char *name, ctype value)	\
+{									\
+	struct var *v;							\
+	if (name == NULL)						\
+		return;							\
+	v = vh_get_var_alloc(get_vh(sp), name, sp);			\
+	AN(v);								\
+	var_clean(v);							\
+	v->type = vcl_type_u;						\
+	v->value.vcl_type_u = value;					\
 }
 
 VMOD_SET_X(INT, int, int)
 VMOD_SET_X(REAL, real, double)
 VMOD_SET_X(DURATION, duration, double)
 
-#define VMOD_GET_X(vcl_type_u, vcl_type_l, ctype) \
-ctype \
-vmod_get_##vcl_type_l(struct sess *sp, const char *name) \
-{ \
-	struct var *v; \
-\
-	if (name == NULL) \
-		return 0; \
-	v = vh_get_var(get_vh(sp), name); \
-\
-	if (!v || v->type != vcl_type_u) \
-		return 0; \
-	return (v->value.vcl_type_u); \
+#define VMOD_GET_X(vcl_type_u, vcl_type_l, ctype)			\
+ctype									\
+vmod_get_##vcl_type_l(struct sess *sp, const char *name)		\
+{									\
+	struct var *v;							\
+									\
+	if (name == NULL)						\
+		return (0);						\
+	v = vh_get_var(get_vh(sp), name);				\
+									\
+	if (!v || v->type != vcl_type_u)				\
+		return (0);						\
+	return (v->value.vcl_type_u);					\
 }
 
 VMOD_GET_X(INT, int, int)
@@ -207,7 +232,8 @@ void vmod_clear(struct sess *sp)
 {
 	struct var_head *vh;
 	vh = get_vh(sp);
-	vh_init(vh);
+	CHECK_OBJ_NOTNULL(vh, VAR_HEAD_MAGIC);
+	vh_reset(vh);
 }
 
 void
@@ -263,5 +289,5 @@ vmod_global_get(struct sess *sp, const char *name)
 		AN(r);
 	}
 	AZ(pthread_mutex_unlock(&var_list_mtx));
-	return(r);
+	return (r);
 }
