@@ -1,3 +1,9 @@
+libvmod-var (0.2) unstable; urgency=medium
+
+  * Prepare 0.2 due to packaging reasons. No code changes.
+
+ -- Lasse Karstensen <lkarsten@varnish-software.com>  Mon, 15 Sep 2014 16:55:31 +0200
+
 libvmod-var (0.1) unstable; urgency=medium
 
   * Rebuild packages.

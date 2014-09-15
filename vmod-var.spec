@@ -1,7 +1,7 @@
 Summary: Variable VMOD for Varnish %{VARNISHVER}
 Name: vmod-var
-Version: 0.1
-Release: 3%{?dist}
+Version: 0.2
+Release: 1%{?dist}
 License: BSD
 Group: System Environment/Daemons
 Source0: libvmod-var.tar.gz
