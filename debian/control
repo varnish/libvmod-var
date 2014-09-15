@@ -8,5 +8,5 @@ Vcs-Git: git://github.com/varnish/libvmod-var.git
 
 Package: libvmod-var
 Architecture: any
-Depends: varnish, ${misc:Depends}
+Depends: varnish, ${Varnish:ABI}, ${misc:Depends}
 Description:  Variable support VMOD
