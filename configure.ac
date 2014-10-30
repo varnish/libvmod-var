@@ -45,7 +45,8 @@ VARNISH_VMOD_DIR
 VARNISH_VMODTOOL
 
 AC_PATH_PROG([VARNISHTEST], [varnishtest])
-AC_PATH_PROG([VARNISHD], [varnishd])
+AC_PATH_PROG([VARNISHD], [varnishd], [],
+    [$PATH:$PATH:`pkg-config varnishapi --variable=sbindir`])
 
 AC_CONFIG_FILES([
 	Makefile
