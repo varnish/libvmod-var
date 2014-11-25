@@ -19,7 +19,7 @@ Variables for Varnish
 %setup -n libvmod-var-%{version}
 
 %build
-%configure --prefix=/usr/ --docdir='$(datarootdir}/doc/%{name}'
+%configure --prefix=/usr/ --docdir=/usr/share/doc/%{name}/
 make
 make check
 
