@@ -16,7 +16,7 @@ BuildRequires: varnish-libs-devel >= 4.0.2
 Variables for Varnish
 
 %prep
-%setup -n libvmod-var-trunk
+%setup -n libvmod-var-%{version}
 
 %build
 %configure --prefix=/usr/ --docdir='$(datarootdir}/doc/%{name}'
