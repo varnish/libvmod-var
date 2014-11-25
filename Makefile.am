@@ -1,5 +1,8 @@
 ACLOCAL_AMFLAGS = -I m4
 
-doc_DATA = README LICENSE
+DISTCHECK_CONFIGURE_FLAGS = \
+        VMOD_DIR='$${libdir}/varnish/vmods'
+
+EXTRA_DIST = README LICENSE vmod-var.spec debian
 
 SUBDIRS = src man
