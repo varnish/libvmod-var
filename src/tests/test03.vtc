@@ -36,6 +36,8 @@ client c1 {
 	expect resp.http.i1 == "124"
 	expect resp.http.r1 == "2.000"
 	expect resp.http.d1 == "60.000"
+	expect resp.http.x-null == ""
+	expect resp.http.x-null2 == ""
 }
 
 client c1 -run

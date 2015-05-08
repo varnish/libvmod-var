@@ -11,7 +11,8 @@ enum VAR_TYPE {
 	STRING,
 	INT,
 	REAL,
-	DURATION
+	DURATION,
+	IP
 };
 
 struct var {
@@ -24,6 +25,7 @@ struct var {
 		int INT;
 		double REAL;
 		double DURATION;
+		struct sockaddr_storage IP;
 	} value;
 	VTAILQ_ENTRY(var) list;
 };
@@ -192,6 +194,32 @@ vmod_get_string(struct sess *sp, const char *name)
 	return (v->value.STRING);
 }
 
+void
+vmod_set_ip(struct sess *sp, const char *name, struct sockaddr_storage *sa)
+{
+	struct var *v;
+
+	if (name == NULL)
+		return;
+	v = vh_get_var_alloc(get_vh(sp), name, sp);
+	AN(v);
+	var_clean(v);
+	v->type = IP;
+	AN(sa);
+	v->value.IP = *sa;
+}
+
+struct sockaddr_storage *
+vmod_get_ip(struct sess *sp, const char *name)
+{
+	struct var *v;
+	if (name == NULL)
+		return (NULL);
+	v = vh_get_var(get_vh(sp), name);
+	if (!v || v->type != IP)
+		return (NULL);
+	return (&v->value.IP);
+}
 
 #define VMOD_SET_X(vcl_type_u, vcl_type_l, ctype)			\
 void									\
