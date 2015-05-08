@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <ctype.h>
+#include <sys/socket.h>
 
 #include "vrt.h"
+#include "vsa.h"
 #include "cache/cache.h"
 
 #include "vcc_if.h"
@@ -10,7 +12,8 @@ enum VAR_TYPE {
 	STRING,
 	INT,
 	REAL,
-	DURATION
+	DURATION,
+	IP
 };
 
 struct var {
@@ -23,6 +26,7 @@ struct var {
 		int INT;
 		double REAL;
 		double DURATION;
+		VCL_IP IP;
 	} value;
 	VTAILQ_ENTRY(var) list;
 };
@@ -169,6 +173,31 @@ vmod_get_string(const struct vrt_ctx *ctx, VCL_STRING name)
 	return (v->value.STRING);
 }
 
+VCL_VOID
+vmod_set_ip(const struct vrt_ctx *ctx, VCL_STRING name, VCL_IP ip)
+{
+	struct var *v;
+
+	if (name == NULL)
+		return;
+	v = vh_get_var_alloc(get_vh(ctx), name, ctx);
+	AN(v);
+	v->type = IP;
+	AN(ip);
+	v->value.IP = WS_Copy(ctx->ws, ip, vsa_suckaddr_len);;
+}
+
+VCL_IP
+vmod_get_ip(const struct vrt_ctx *ctx, VCL_STRING name)
+{
+	struct var *v;
+	if (name == NULL)
+		return (NULL);
+	v = vh_get_var(get_vh(ctx), name);
+	if (!v || v->type != IP)
+		return NULL;
+	return (v->value.IP);
+}
 
 #define VMOD_SET_X(vcl_type_u, vcl_type_l, ctype) \
 VCL_VOID \

@@ -23,6 +23,9 @@ varnish v1 -vcl+backend {
 
 		var.set_duration("d1", 1m);
 		set resp.http.d1 = var.get_duration("d1");
+
+		var.set_ip("ip1", client.ip);
+		set resp.http.ip1 = var.get_ip("ip1");
 	}
 } -start
 
@@ -34,6 +37,7 @@ client c1 {
 	expect resp.http.i1 == "124"
 	expect resp.http.r1 == "2.000"
 	expect resp.http.d1 == "60.000"
+	expect resp.http.ip1 == "127.0.0.1"
 }
 
 client c1 -run

@@ -27,6 +27,9 @@ Function REAL get_real(STRING)
 Function VOID set_duration(STRING, DURATION)
 Function DURATION get_duration(STRING)
 
+Function VOID set_ip(STRING, IP)
+Function IP get_ip(STRING)
+
 Function VOID clear()
 
 clear() clears the whole non-global variable space.

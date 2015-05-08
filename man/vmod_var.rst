@@ -7,7 +7,7 @@ Varnish Example Module
 ----------------------
 
 :Author: Tollef Fog Heen
-:Date: 2011-09-28
+:Date: 2015-05-08
 :Version: 1.0
 :Manual section: 3
 
@@ -61,6 +61,8 @@ There are similar functions named:
 * get_real(STRING)
 * set_duration(STRING, DURATION)
 * get_duration(STRING)
+* set_ip(STRING, IP)
+* get_ip(STRING)
 
 get and set are shorthand for get_string and set_string.
 
