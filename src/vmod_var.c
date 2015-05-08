@@ -205,7 +205,7 @@ vmod_set_ip(struct sess *sp, const char *name, struct sockaddr_storage *ip)
 	AN(v);
 	var_clean(v);
 	v->type = IP;
-	AN(sa);
+	AN(ip);
 	v->value.IP = *ip;
 }
 
