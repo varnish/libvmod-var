@@ -195,7 +195,7 @@ vmod_get_string(struct sess *sp, const char *name)
 }
 
 void
-vmod_set_ip(struct sess *sp, const char *name, struct sockaddr_storage *sa)
+vmod_set_ip(struct sess *sp, const char *name, struct sockaddr_storage *ip)
 {
 	struct var *v;
 
@@ -206,7 +206,7 @@ vmod_set_ip(struct sess *sp, const char *name, struct sockaddr_storage *sa)
 	var_clean(v);
 	v->type = IP;
 	AN(sa);
-	v->value.IP = *sa;
+	v->value.IP = *ip;
 }
 
 struct sockaddr_storage *
