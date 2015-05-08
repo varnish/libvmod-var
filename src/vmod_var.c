@@ -25,7 +25,7 @@ struct var {
 		int INT;
 		double REAL;
 		double DURATION;
-		struct sockaddr_storage IP;
+		struct sockaddr_storage *IP;
 	} value;
 	VTAILQ_ENTRY(var) list;
 };
@@ -51,6 +51,10 @@ var_clean(struct var *v)
 	case STRING:
 		AN(v->value.STRING);
 		free(v->value.STRING);
+		break;
+	case IP:
+		AN(v->value.IP);
+		free(v->value.IP);
 		break;
 	default:
 		break;
@@ -206,7 +210,9 @@ vmod_set_ip(struct sess *sp, const char *name, struct sockaddr_storage *ip)
 	var_clean(v);
 	v->type = IP;
 	AN(ip);
-	v->value.IP = *ip;
+	v->value.IP = malloc(sizeof(*ip));
+	if (v->value.IP)
+		memcpy(v->value.IP, ip, sizeof(*ip));
 }
 
 struct sockaddr_storage *
@@ -218,7 +224,7 @@ vmod_get_ip(struct sess *sp, const char *name)
 	v = vh_get_var(get_vh(sp), name);
 	if (!v || v->type != IP)
 		return (NULL);
-	return (&v->value.IP);
+	return (v->value.IP);
 }
 
 #define VMOD_SET_X(vcl_type_u, vcl_type_l, ctype)			\
