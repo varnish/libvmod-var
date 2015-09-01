@@ -34,7 +34,6 @@ struct var {
 struct var_head {
 	unsigned magic;
 #define VAR_HEAD_MAGIC 0x64F33E2F
-	uint32_t vxid;
 	VTAILQ_HEAD(, var) vars;
 };
 
