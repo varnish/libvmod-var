@@ -85,7 +85,7 @@ vh_get_var_alloc(struct var_head *vh, const char *name, const struct vrt_ctx *ct
 	return v;
 }
 
-void
+static void
 free_func(void *p)
 {
 	struct var_head *vh;
