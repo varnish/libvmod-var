@@ -38,8 +38,6 @@ struct var_head {
 	VTAILQ_HEAD(, var) vars;
 };
 
-static struct var_head **var_list = NULL;
-static int var_list_sz = 0;
 static VTAILQ_HEAD(, var) global_vars = VTAILQ_HEAD_INITIALIZER(global_vars);
 static pthread_mutex_t var_list_mtx = PTHREAD_MUTEX_INITIALIZER;
 
@@ -88,72 +86,52 @@ vh_get_var_alloc(struct var_head *vh, const char *name, const struct vrt_ctx *ct
 	return v;
 }
 
-int
-init_function(struct vmod_priv *priv, const struct VCL_conf *conf)
-{
-
-	AZ(pthread_mutex_lock(&var_list_mtx));
-	if (var_list == NULL) {
-		AZ(var_list_sz);
-		var_list_sz = 256;
-		var_list = malloc(sizeof(struct var_head *) * 256);
-		AN(var_list);
-		for (int i = 0 ; i < var_list_sz; i++) {
-			var_list[i] = malloc(sizeof(struct var_head));
-			vh_init(var_list[i]);
-		}
-	}
-	AZ(pthread_mutex_unlock(&var_list_mtx));
-	return 0;
-}
-
-static struct var_head *
-get_vh(const struct vrt_ctx *ctx)
+void
+free_func(void *p)
 {
 	struct var_head *vh;
 
-	AZ(pthread_mutex_lock(&var_list_mtx));
-	while (var_list_sz <= ctx->req->sp->fd) {
-		int ns = var_list_sz*2;
-		/* resize array */
-		var_list = realloc(var_list, ns * sizeof(struct var_head *));
-		for (; var_list_sz < ns; var_list_sz++) {
-			var_list[var_list_sz] = malloc(sizeof(struct var_head));
-			vh_init(var_list[var_list_sz]);
-		}
-		assert(var_list_sz == ns);
-		AN(var_list);
-	}
-	vh = var_list[ctx->req->sp->fd];
+	CAST_OBJ_NOTNULL(vh, p, VAR_HEAD_MAGIC);
+	FREE_OBJ(vh);
+}
 
-	if (vh->vxid != ctx->req->sp->vxid) {
-		vh_init(vh);
-		vh->vxid = ctx->req->sp->vxid;
-	}
-	AZ(pthread_mutex_unlock(&var_list_mtx));
-	return vh;
+static struct var_head *
+get_vh(struct vmod_priv *priv)
+{
+	struct var_head *vh;
+
+	if (priv->priv == NULL) {
+		ALLOC_OBJ(vh, VAR_HEAD_MAGIC);
+		priv->priv = vh;
+		priv->free = free_func;
+	} else
+		CAST_OBJ_NOTNULL(vh, priv->priv, VAR_HEAD_MAGIC);
+
+	return (vh);
 }
 
 VCL_VOID
-vmod_set(const struct vrt_ctx *ctx, VCL_STRING name, VCL_STRING value)
+vmod_set(const struct vrt_ctx *ctx, struct vmod_priv *priv, VCL_STRING name,
+    VCL_STRING value)
 {
-	vmod_set_string(ctx, name, value);
+	vmod_set_string(ctx, priv, name, value);
 }
 
 VCL_STRING
-vmod_get(const struct vrt_ctx *ctx, VCL_STRING name)
+vmod_get(const struct vrt_ctx *ctx, struct vmod_priv *priv, VCL_STRING name)
 {
-	return vmod_get_string(ctx, name);
+	return vmod_get_string(ctx, priv, name);
 }
 
 VCL_VOID
-vmod_set_string(const struct vrt_ctx *ctx, VCL_STRING name, VCL_STRING value)
+vmod_set_string(const struct vrt_ctx *ctx, struct vmod_priv *priv,
+    VCL_STRING name, VCL_STRING value)
 {
 	struct var *v;
 
 	if (name == NULL)
 		return;
-	v = vh_get_var_alloc(get_vh(ctx), name, ctx);
+	v = vh_get_var_alloc(get_vh(priv), name, ctx);
 	AN(v);
 	v->type = STRING;
 	if (value == NULL)
@@ -162,25 +140,27 @@ vmod_set_string(const struct vrt_ctx *ctx, VCL_STRING name, VCL_STRING value)
 }
 
 VCL_STRING
-vmod_get_string(const struct vrt_ctx *ctx, VCL_STRING name)
+vmod_get_string(const struct vrt_ctx *ctx, struct vmod_priv *priv,
+    VCL_STRING name)
 {
 	struct var *v;
 	if (name == NULL)
 		return (NULL);
-	v = vh_get_var(get_vh(ctx), name);
+	v = vh_get_var(get_vh(priv), name);
 	if (!v || v->type != STRING)
 		return NULL;
 	return (v->value.STRING);
 }
 
 VCL_VOID
-vmod_set_ip(const struct vrt_ctx *ctx, VCL_STRING name, VCL_IP ip)
+vmod_set_ip(const struct vrt_ctx *ctx, struct vmod_priv *priv, VCL_STRING name,
+    VCL_IP ip)
 {
 	struct var *v;
 
 	if (name == NULL)
 		return;
-	v = vh_get_var_alloc(get_vh(ctx), name, ctx);
+	v = vh_get_var_alloc(get_vh(priv), name, ctx);
 	AN(v);
 	v->type = IP;
 	AN(ip);
@@ -188,47 +168,49 @@ vmod_set_ip(const struct vrt_ctx *ctx, VCL_STRING name, VCL_IP ip)
 }
 
 VCL_IP
-vmod_get_ip(const struct vrt_ctx *ctx, VCL_STRING name)
+vmod_get_ip(const struct vrt_ctx *ctx, struct vmod_priv *priv, VCL_STRING name)
 {
 	struct var *v;
 	if (name == NULL)
 		return (NULL);
-	v = vh_get_var(get_vh(ctx), name);
+	v = vh_get_var(get_vh(priv), name);
 	if (!v || v->type != IP)
 		return NULL;
 	return (v->value.IP);
 }
 
-#define VMOD_SET_X(vcl_type_u, vcl_type_l, ctype) \
-VCL_VOID \
-vmod_set_##vcl_type_l(const struct vrt_ctx *ctx, const char *name, ctype value) \
-{ \
-	struct var *v; \
-	if (name == NULL) \
-		return; \
-	v = vh_get_var_alloc(get_vh(ctx), name, ctx); \
-	AN(v); \
-	v->type = vcl_type_u; \
-	v->value.vcl_type_u = value; \
+#define VMOD_SET_X(vcl_type_u, vcl_type_l, ctype)	\
+VCL_VOID						\
+vmod_set_##vcl_type_l(const struct vrt_ctx *ctx, struct vmod_priv *priv,\
+    const char *name, ctype value)					\
+{									\
+	struct var *v;							\
+	if (name == NULL)						\
+		return;							\
+	v = vh_get_var_alloc(get_vh(priv), name, ctx);			\
+	AN(v);								\
+	v->type = vcl_type_u;						\
+	v->value.vcl_type_u = value;					\
 }
 
 VMOD_SET_X(INT, int, VCL_INT)
 VMOD_SET_X(REAL, real, VCL_REAL)
 VMOD_SET_X(DURATION, duration, VCL_DURATION)
 
-#define VMOD_GET_X(vcl_type_u, vcl_type_l, ctype) \
-ctype \
-vmod_get_##vcl_type_l(const struct vrt_ctx *ctx, const char *name) \
-{ \
-	struct var *v; \
-\
-	if (name == NULL) \
-		return 0; \
-	v = vh_get_var(get_vh(ctx), name); \
-\
-	if (!v || v->type != vcl_type_u) \
-		return 0; \
-	return (v->value.vcl_type_u); \
+#define VMOD_GET_X(vcl_type_u, vcl_type_l, ctype)	\
+ctype							\
+vmod_get_##vcl_type_l(const struct vrt_ctx *ctx, struct vmod_priv *priv,\
+    const char *name)							\
+{									\
+	struct var *v;							\
+									\
+	if (name == NULL)						\
+		return 0;						\
+	v = vh_get_var(get_vh(priv), name);				\
+									\
+	if (!v || v->type != vcl_type_u)				\
+		return 0;						\
+	return (v->value.vcl_type_u);					\
 }
 
 VMOD_GET_X(INT, int, VCL_INT)
@@ -236,10 +218,10 @@ VMOD_GET_X(REAL, real, VCL_REAL)
 VMOD_GET_X(DURATION, duration, VCL_DURATION)
 
 VCL_VOID
-vmod_clear(const struct vrt_ctx *ctx)
+vmod_clear(const struct vrt_ctx *ctx, struct vmod_priv *priv)
 {
 	struct var_head *vh;
-	vh = get_vh(ctx);
+	vh = get_vh(priv);
 	vh_init(vh);
 }
 

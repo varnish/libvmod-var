@@ -1,20 +1,19 @@
 $Module var 3 Variable VMOD for Varnish
-$Init init_function
 # Shortcut for strings
-$Function VOID set(STRING, STRING)
-$Function STRING get(STRING)
+$Function VOID set(PRIV_TASK, STRING, STRING)
+$Function STRING get(PRIV_TASK, STRING)
 
 $Function VOID global_set(STRING, STRING)
 $Function STRING global_get(STRING)
 
-$Function VOID set_int(STRING, INT)
-$Function INT get_int(STRING)
-$Function VOID set_string(STRING, STRING)
-$Function STRING get_string(STRING)
-$Function VOID set_real(STRING, REAL)
-$Function REAL get_real(STRING)
-$Function VOID set_duration(STRING, DURATION)
-$Function DURATION get_duration(STRING)
-$Function VOID set_ip(STRING, IP)
-$Function IP get_ip(STRING)
-$Function VOID clear()
+$Function VOID set_int(PRIV_TASK, STRING, INT)
+$Function INT get_int(PRIV_TASK, STRING)
+$Function VOID set_string(PRIV_TASK, STRING, STRING)
+$Function STRING get_string(PRIV_TASK, STRING)
+$Function VOID set_real(PRIV_TASK, STRING, REAL)
+$Function REAL get_real(PRIV_TASK, STRING)
+$Function VOID set_duration(PRIV_TASK, STRING, DURATION)
+$Function DURATION get_duration(PRIV_TASK, STRING)
+$Function VOID set_ip(PRIV_TASK, STRING, IP)
+$Function IP get_ip(PRIV_TASK, STRING)
+$Function VOID clear(PRIV_TASK)
