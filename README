@@ -37,4 +37,4 @@ clear() clears the whole non-global variable space.
 
 VARNISH 4.0 LIMITATION: This VMOD is currently NOT available in the
 following Varnish 4.0 VCL methods: vcl_backend_fetch,
-vcl_backend_response and vcl_backend_error. See github issue #5
+vcl_backend_response and vcl_backend_error. For explanation and workaround see github issue #5
