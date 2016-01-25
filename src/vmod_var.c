@@ -112,6 +112,10 @@ get_vh(const struct vrt_ctx *ctx)
 {
 	struct var_head *vh;
 
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(ctx->req, REQ_MAGIC);
+	AN(ctx->req->vsl);
+
 	AZ(pthread_mutex_lock(&var_list_mtx));
 	while (var_list_sz <= ctx->req->sp->fd) {
 		int ns = var_list_sz*2;
@@ -126,9 +130,10 @@ get_vh(const struct vrt_ctx *ctx)
 	}
 	vh = var_list[ctx->req->sp->fd];
 
-	if (vh->vxid != ctx->req->sp->vxid) {
+	AN(ctx->req->vsl->wid);
+	if (vh->vxid != ctx->req->vsl->wid) {
 		vh_init(vh);
-		vh->vxid = ctx->req->sp->vxid;
+		vh->vxid = ctx->req->vsl->wid;
 	}
 	AZ(pthread_mutex_unlock(&var_list_mtx));
 	return vh;

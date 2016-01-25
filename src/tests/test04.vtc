@@ -22,6 +22,11 @@ client c1 {
 	txreq -url "/"
 	rxresp
 	expect resp.http.x-foo == "bar"
+
+	# Verify that it also works for pipelined requests.
+	txreq -url "/"
+	rxresp
+	expect resp.http.x-foo == "bar"
 } -start
 
 varnish v1 -vcl+backend {
