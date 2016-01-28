@@ -1,0 +1,31 @@
+varnishtest "Test that a var persists across a restart"
+
+server s1 {
+	rxreq
+	txresp
+	rxreq
+	txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import var from "${vmod_topbuild}/src/.libs/libvmod_var.so";
+
+	sub vcl_deliver {
+		if (req.restarts == 0 && req.url == "/a") {
+			var.set("foo", "bar");
+			return (restart);
+		}
+
+		set resp.http.x-foo = var.get("foo");
+	}
+} -start
+
+client c1 {
+	txreq -url "/a"
+	rxresp
+	expect resp.http.x-foo == "bar"
+
+	txreq
+	rxresp
+	expect resp.http.x-foo == ""
+} -run
