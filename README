@@ -47,5 +47,5 @@ VARNISH 4.0 LIMITATIONS:
     cleaning the var space when crossing a request boundary but not during
     restarts). When enabling this the var space must be manually cleared in VCL
     (i.e. var.clear()) during the initial request (i.e. vcl_recv when
-    req.restart == 0) before doing any get or set operation. Otherwise crashes
+    req.restarts == 0) before doing any get or set operation. Otherwise crashes
     are expected. For additional details see github issue #12.
