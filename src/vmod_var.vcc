@@ -18,3 +18,5 @@ $Function DURATION get_duration(STRING)
 $Function VOID set_ip(STRING, IP)
 $Function IP get_ip(STRING)
 $Function VOID clear()
+
+$Function VOID disable_implicit_clears()
