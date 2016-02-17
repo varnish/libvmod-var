@@ -206,36 +206,37 @@ vmod_get_ip(const struct vrt_ctx *ctx, VCL_STRING name)
 	return (v->value.IP);
 }
 
-#define VMOD_SET_X(vcl_type_u, vcl_type_l, ctype) \
-VCL_VOID \
-vmod_set_##vcl_type_l(const struct vrt_ctx *ctx, const char *name, ctype value) \
-{ \
-	struct var *v; \
-	if (name == NULL) \
-		return; \
-	v = vh_get_var_alloc(get_vh(ctx), name, ctx); \
-	AN(v); \
-	v->type = vcl_type_u; \
-	v->value.vcl_type_u = value; \
+#define VMOD_SET_X(vcl_type_u, vcl_type_l, ctype)			\
+VCL_VOID								\
+vmod_set_##vcl_type_l(const struct vrt_ctx *ctx,			\
+    const char *name, ctype value)					\
+{									\
+	struct var *v;							\
+	if (name == NULL)						\
+		return;							\
+	v = vh_get_var_alloc(get_vh(ctx), name, ctx);			\
+	AN(v);								\
+	v->type = vcl_type_u;						\
+	v->value.vcl_type_u = value;					\
 }
 
 VMOD_SET_X(INT, int, VCL_INT)
 VMOD_SET_X(REAL, real, VCL_REAL)
 VMOD_SET_X(DURATION, duration, VCL_DURATION)
 
-#define VMOD_GET_X(vcl_type_u, vcl_type_l, ctype) \
-ctype \
-vmod_get_##vcl_type_l(const struct vrt_ctx *ctx, const char *name) \
-{ \
-	struct var *v; \
-\
-	if (name == NULL) \
-		return 0; \
-	v = vh_get_var(get_vh(ctx), name); \
-\
-	if (!v || v->type != vcl_type_u) \
-		return 0; \
-	return (v->value.vcl_type_u); \
+#define VMOD_GET_X(vcl_type_u, vcl_type_l, ctype)			\
+ctype									\
+vmod_get_##vcl_type_l(const struct vrt_ctx *ctx, const char *name)	\
+{									\
+	struct var *v;							\
+									\
+	if (name == NULL)						\
+		return 0;						\
+	v = vh_get_var(get_vh(ctx), name);				\
+									\
+	if (!v || v->type != vcl_type_u)				\
+		return 0;						\
+	return (v->value.vcl_type_u);					\
 }
 
 VMOD_GET_X(INT, int, VCL_INT)
