@@ -38,6 +38,7 @@ struct var_head {
 	VTAILQ_HEAD(, var) vars;
 };
 
+static unsigned implicit_clears_disabled = 0;
 static struct var_head **var_list = NULL;
 static int var_list_sz = 0;
 static VTAILQ_HEAD(, var) global_vars = VTAILQ_HEAD_INITIALIZER(global_vars);
@@ -129,10 +130,12 @@ get_vh(const struct vrt_ctx *ctx)
 	}
 	vh = var_list[ctx->req->sp->fd];
 
-	AN(ctx->req->vsl->wid);
-	if (vh->vxid != ctx->vsl->wid) {
-		vh_init(vh);
-		vh->vxid = ctx->vsl->wid;
+	if (!implicit_clears_disabled) {
+		AN(ctx->req->vsl->wid);
+		if (vh->vxid != ctx->vsl->wid) {
+			vh_init(vh);
+			vh->vxid = ctx->vsl->wid;
+		}
 	}
 	AZ(pthread_mutex_unlock(&var_list_mtx));
 	return vh;
@@ -301,4 +304,10 @@ vmod_global_get(const struct vrt_ctx *ctx, VCL_STRING name)
 	}
 	AZ(pthread_mutex_unlock(&var_list_mtx));
 	return(r);
+}
+
+VCL_VOID
+vmod_disable_implicit_clears(const struct vrt_ctx *ctx)
+{
+	implicit_clears_disabled = 1;
 }

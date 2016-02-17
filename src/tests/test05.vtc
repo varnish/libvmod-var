@@ -1,0 +1,40 @@
+varnishtest "Test disable_implicit_clears() workaround"
+
+server s1 {
+       rxreq
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+    import var from "${vmod_topbuild}/src/.libs/libvmod_var.so";
+
+    sub vcl_init {
+        var.disable_implicit_clears();
+    }
+
+    sub vcl_recv {
+        if (req.restarts == 0) {
+            var.clear();
+            var.set("foo", req.http.value);
+        }
+    }
+
+    sub vcl_deliver {
+        if (req.restarts == 0) {
+            return (restart);
+        }
+        set resp.http.x-foo = var.get("foo");
+    }
+} -start
+
+client c1 {
+    txreq -url "/" -hdr "value: bar"
+    rxresp
+    expect resp.http.x-foo == "bar"
+
+    txreq -url "/" -hdr "value: baz"
+    rxresp
+    expect resp.http.x-foo == "baz"
+}
+
+client c1 -run

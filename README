@@ -34,7 +34,18 @@ Function VOID clear()
 
 clear() clears the whole non-global variable space.
 
+VARNISH 4.0 LIMITATIONS:
+    - This VMOD is currently NOT available in the following Varnish 4.0 VCL
+    methods: vcl_backend_fetch, vcl_backend_response and vcl_backend_error.
+    For explanation and workaround see github issue #5.
 
-VARNISH 4.0 LIMITATION: This VMOD is currently NOT available in the
-following Varnish 4.0 VCL methods: vcl_backend_fetch,
-vcl_backend_response and vcl_backend_error. For explanation and workaround see github issue #5
+    - Local variables set using this VMOD will be reset when crossing a request
+    boundary, but also when restarting a request. This is the default behavior
+    in Varnish 4.0. Function disable_implicit_clears() is provided in order
+    disable implicit clears of the var space. This allows mimicking in Varnish
+    4.0 the default behavior in older and newer versions of Varnish (i.e.
+    cleaning the var space when crossing a request boundary but not during
+    restarts). When enabling this the var space must be manually cleared in VCL
+    (i.e. var.clear()) during the initial request (i.e. vcl_recv when
+    req.restarts == 0) before doing any get or set operation. Otherwise crashes
+    are expected. For additional details see github issue #12.
